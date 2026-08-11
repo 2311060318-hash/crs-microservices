@@ -5,7 +5,11 @@ import vn.edu.crs.courseservice.entity.Course;
 import vn.edu.crs.courseservice.repository.CourseRepository;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,6 +21,10 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
 
+    // =========================
+    // CRUD LAB 2
+    // =========================
+
     public List<CourseDTO> getAll() {
         return courseRepository.findAll()
                 .stream()
@@ -25,6 +33,7 @@ public class CourseService {
     }
 
     public CourseDTO getById(Long id) {
+
         Course course = courseRepository.findById(id)
                 .orElseThrow(() ->
                         new NoSuchElementException(
@@ -37,8 +46,12 @@ public class CourseService {
 
     public CourseDTO create(CourseDTO dto) {
 
-        if (courseRepository.existsByTenMonHocIgnoreCase(dto.getTenMonHoc())) {
-            throw new IllegalArgumentException("Ten mon hoc da ton tai");
+        if (courseRepository
+                .existsByTenMonHocIgnoreCase(dto.getTenMonHoc())) {
+
+            throw new IllegalArgumentException(
+                    "Ten mon hoc da ton tai"
+            );
         }
 
         Course course = new Course();
@@ -47,8 +60,8 @@ public class CourseService {
         course.setSoTinChi(dto.getSoTinChi());
         course.setSoChoToiDa(dto.getSoChoToiDa());
 
-        // Quy tac nghiep vu:
-        // khi tao moi, so cho con lai = so cho toi da
+        // Khi tạo môn mới:
+        // số chỗ còn lại = số chỗ tối đa
         course.setSoChoConLai(dto.getSoChoToiDa());
 
         return toDTO(courseRepository.save(course));
@@ -67,7 +80,7 @@ public class CourseService {
         course.setSoTinChi(dto.getSoTinChi());
         course.setSoChoToiDa(dto.getSoChoToiDa());
 
-        // KHONG sua soChoConLai o day
+        // Không sửa soChoConLai ở đây
 
         return toDTO(courseRepository.save(course));
     }
@@ -82,6 +95,86 @@ public class CourseService {
 
         courseRepository.deleteById(id);
     }
+
+    // =========================
+    // LAB 3 - SEARCH/PAGINATION
+    // =========================
+
+    public Page<CourseDTO> search(
+            String keyword,
+            Pageable pageable
+    ) {
+
+        Page<Course> page;
+
+        if (keyword == null || keyword.isBlank()) {
+            page = courseRepository.findAll(pageable);
+        } else {
+            page =
+                    courseRepository
+                            .findByTenMonHocContainingIgnoreCase(
+                                    keyword,
+                                    pageable
+                            );
+        }
+
+        return page.map(this::toDTO);
+    }
+
+    // =========================
+    // LAB 3 - INTERNAL API
+    // =========================
+
+    @Transactional
+    public CourseDTO reserveSeat(Long courseId) {
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "Khong tim thay mon hoc id = "
+                                        + courseId
+                        )
+                );
+
+        if (course.getSoChoConLai() <= 0) {
+
+            throw new IllegalStateException(
+                    "Mon hoc da het cho, khong the dang ky"
+            );
+        }
+
+        course.setSoChoConLai(
+                course.getSoChoConLai() - 1
+        );
+
+        return toDTO(courseRepository.save(course));
+    }
+
+    @Transactional
+    public CourseDTO releaseSeat(Long courseId) {
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() ->
+                        new NoSuchElementException(
+                                "Khong tim thay mon hoc id = "
+                                        + courseId
+                        )
+                );
+
+        if (course.getSoChoConLai()
+                < course.getSoChoToiDa()) {
+
+            course.setSoChoConLai(
+                    course.getSoChoConLai() + 1
+            );
+        }
+
+        return toDTO(courseRepository.save(course));
+    }
+
+    // =========================
+    // ENTITY -> DTO
+    // =========================
 
     private CourseDTO toDTO(Course course) {
 
