@@ -9,8 +9,28 @@ spring:
     gateway:
       server:
         webflux:
+
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:5173"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - PATCH
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+
           routes:
 
+            # =========================
+            # AUTH SERVICE
+            # =========================
             - id: auth-service
               uri: http://localhost:8081
               predicates:
@@ -18,6 +38,9 @@ spring:
               filters:
                 - RewritePath=/api/auth/(?<segment>.*), /auth/${segment}
 
+            # =========================
+            # COURSE SERVICE - LIST
+            # =========================
             - id: course-service-list
               uri: http://localhost:8082
               predicates:
@@ -25,6 +48,9 @@ spring:
               filters:
                 - RewritePath=/api/courses, /courses
 
+            # =========================
+            # COURSE SERVICE - DETAIL
+            # =========================
             - id: course-service-detail
               uri: http://localhost:8082
               predicates:
@@ -32,6 +58,9 @@ spring:
               filters:
                 - RewritePath=/api/courses/(?<segment>.*), /courses/${segment}
 
+            # =========================
+            # REGISTRATION SERVICE - LIST
+            # =========================
             - id: registration-service-list
               uri: http://localhost:8083
               predicates:
@@ -39,6 +68,9 @@ spring:
               filters:
                 - RewritePath=/api/registrations, /registrations
 
+            # =========================
+            # REGISTRATION SERVICE - DETAIL
+            # =========================
             - id: registration-service-detail
               uri: http://localhost:8083
               predicates:
@@ -46,12 +78,16 @@ spring:
               filters:
                 - RewritePath=/api/registrations/(?<segment>.*), /registrations/${segment}
 
+            # =========================
+            # PARTNER PUBLIC COURSE API
+            # =========================
             - id: partner-courses
               uri: http://localhost:8082
               predicates:
                 - Path=/api/public/courses
               filters:
                 - RewritePath=/api/public/courses, /courses
+
 
 partner:
   api-key: crs-partner-key-2026
