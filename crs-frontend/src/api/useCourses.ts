@@ -6,7 +6,11 @@ import axios from 'axios';
 
 export type LoadState = 'loading' | 'success' | 'empty' | 'error';
 
-export function useCourses(keyword: string, page: number, size = 10) {
+export function useCourses(
+  keyword: string,
+  page: number,
+  size = 10
+) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [state, setState] = useState<LoadState>('loading');
@@ -21,7 +25,12 @@ export function useCourses(keyword: string, page: number, size = 10) {
 
         setCourses(data.content);
         setTotalPages(data.totalPages);
-        setState(data.content.length === 0 ? 'empty' : 'success');
+
+        setState(
+          data.content.length === 0
+            ? 'empty'
+            : 'success'
+        );
       })
       .catch((err) => {
         let message =
