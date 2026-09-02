@@ -18,12 +18,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public LoginResponseDTO login(LoginRequestDTO dto) {
-
+    public LoginResponseDTO login(
+            LoginRequestDTO dto
+    ) {
         User user = userRepository
                 .findByUsername(dto.getUsername())
-                .orElseThrow(() ->
-                        new InvalidCredentialsException(
+                .orElseThrow(
+                        () -> new InvalidCredentialsException(
                                 "Sai username hoac password"
                         )
                 );
@@ -38,11 +39,13 @@ public class AuthService {
         }
 
         String token = jwtUtil.generateToken(
+                user.getId(),
                 user.getUsername(),
                 user.getRole()
         );
 
         return new LoginResponseDTO(
+                user.getId(),
                 token,
                 user.getUsername(),
                 user.getRole()

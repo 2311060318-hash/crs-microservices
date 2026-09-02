@@ -3,12 +3,10 @@ package vn.edu.crs.courseservice.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,13 +15,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Component
-public class JwtAuthFilter extends OncePerRequestFilter {
+public class JwtAuthFilter
+        extends OncePerRequestFilter {
 
     @Value("${jwt.secret}")
     private String secret;
@@ -35,16 +33,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader =
-                request.getHeader("Authorization");
+        String authorization =
+                request.getHeader(
+                        "Authorization"
+                );
 
-        if (authHeader != null
-                && authHeader.startsWith("Bearer ")) {
-
-            String token = authHeader.substring(7);
+        if (
+                authorization != null &&
+                authorization.startsWith(
+                        "Bearer "
+                )
+        ) {
+            String token =
+                    authorization.substring(7);
 
             try {
-
                 SecretKey key =
                         Keys.hmacShaKeyFor(
                                 secret.getBytes(
@@ -56,7 +59,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         Jwts.parser()
                                 .verifyWith(key)
                                 .build()
-                                .parseSignedClaims(token)
+                                .parseSignedClaims(
+                                        token
+                                )
                                 .getPayload();
 
                 String username =
@@ -68,10 +73,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 String.class
                         );
 
-                UsernamePasswordAuthenticationToken authentication =
+                Number userIdClaim =
+                        claims.get(
+                                "userId",
+                                Number.class
+                        );
+
+                Long userId =
+                        userIdClaim == null
+                                ? null
+                                : userIdClaim.longValue();
+
+                var authentication =
                         new UsernamePasswordAuthenticationToken(
                                 username,
-                                null,
+                                userId,
                                 List.of(
                                         new SimpleGrantedAuthority(
                                                 "ROLE_" + role
@@ -81,11 +97,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder
                         .getContext()
-                        .setAuthentication(authentication);
+                        .setAuthentication(
+                                authentication
+                        );
 
-            } catch (Exception e) {
-
-                SecurityContextHolder.clearContext();
+            } catch (Exception exception) {
+                SecurityContextHolder
+                        .clearContext();
             }
         }
 

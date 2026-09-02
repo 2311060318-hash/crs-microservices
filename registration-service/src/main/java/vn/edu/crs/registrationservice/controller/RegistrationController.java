@@ -34,7 +34,6 @@ public class RegistrationController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void cancel(@PathVariable Long id) {
         registrationService.cancel(id);
     }
