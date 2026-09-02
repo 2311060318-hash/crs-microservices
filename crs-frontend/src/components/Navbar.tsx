@@ -25,7 +25,8 @@ export default function Navbar() {
         display: 'flex',
         gap: 16,
         padding: 12,
-        borderBottom: '1px solid #ddd',
+        borderBottom:
+          '1px solid #ddd',
         alignItems: 'center',
       }}
     >
@@ -42,20 +43,32 @@ export default function Navbar() {
 
       {isAuthenticated &&
         user?.role === 'STUDENT' && (
-          <Link to="/register-course">
-            Đăng ký học phần
-          </Link>
+          <>
+            <Link to="/register-course">
+              Đăng ký học phần
+            </Link>
+
+            <Link to="/my-registrations">
+              Môn học đã đăng ký
+            </Link>
+          </>
         )}
 
       <div style={{ marginLeft: 'auto' }}>
         {isAuthenticated ? (
           <>
-            <span style={{ marginRight: 12 }}>
+            <span
+              style={{
+                marginRight: 12,
+              }}
+            >
               Xin chào, {user?.username}{' '}
               ({user?.role})
             </span>
 
-            <button onClick={handleLogout}>
+            <button
+              onClick={handleLogout}
+            >
               Đăng xuất
             </button>
           </>

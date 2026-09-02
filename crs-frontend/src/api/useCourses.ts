@@ -1,54 +1,100 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getCourses } from './courseApi';
-import type { Course } from '../types/course';
-import type { ApiErrorResponse } from '../types/apiError';
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+
 import axios from 'axios';
 
-export type LoadState = 'loading' | 'success' | 'empty' | 'error';
+import {
+  getCourses,
+} from './courseApi';
+
+import type {
+  Course,
+} from '../types/course';
+
+import type {
+  ApiErrorResponse,
+} from '../types/apiError';
+
+export type LoadState =
+  | 'loading'
+  | 'success'
+  | 'empty'
+  | 'error';
 
 export function useCourses(
   keyword: string,
   page: number,
   size = 10
 ) {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [totalPages, setTotalPages] = useState(0);
-  const [state, setState] = useState<LoadState>('loading');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [courses, setCourses] =
+    useState<Course[]>([]);
 
-  const fetchCourses = useCallback(() => {
-    setState('loading');
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(0);
 
-    getCourses(keyword, page, size)
-      .then((res) => {
-        const data = res.data;
+  const [state, setState] =
+    useState<LoadState>('loading');
 
-        setCourses(data.content);
-        setTotalPages(data.totalPages);
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState('');
 
-        setState(
-          data.content.length === 0
-            ? 'empty'
-            : 'success'
-        );
-      })
-      .catch((err) => {
-        let message =
-          'Da xay ra loi khong xac dinh, vui long thu lai.';
+  const fetchCourses =
+    useCallback(() => {
+      setState('loading');
+      setErrorMessage('');
 
-        if (axios.isAxiosError<ApiErrorResponse>(err)) {
-          if (err.response?.data?.message) {
-            message = err.response.data.message;
-          } else if (!err.response) {
+      getCourses(
+        keyword,
+        page,
+        size
+      )
+        .then((response) => {
+          const data = response.data;
+          const content =
+            data.content ?? [];
+
+          setCourses(content);
+          setTotalPages(
+            data.totalPages ?? 0
+          );
+
+          setState(
+            content.length === 0
+              ? 'empty'
+              : 'success'
+          );
+        })
+        .catch((error: unknown) => {
+          let message =
+            'Không tải được danh sách môn học.';
+
+          if (
+            axios.isAxiosError<ApiErrorResponse>(
+              error
+            ) &&
+            error.response?.data?.message
+          ) {
             message =
-              'Khong ket noi duoc toi he thong. Vui long thu lai sau.';
+              error.response.data.message;
           }
-        }
 
-        setErrorMessage(message);
-        setState('error');
-      });
-  }, [keyword, page, size]);
+          setCourses([]);
+          setTotalPages(0);
+          setErrorMessage(message);
+          setState('error');
+        });
+    }, [
+      keyword,
+      page,
+      size,
+    ]);
 
   useEffect(() => {
     fetchCourses();

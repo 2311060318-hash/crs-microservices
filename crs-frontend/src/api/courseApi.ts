@@ -2,48 +2,65 @@ import axiosClient from './axiosClient';
 
 import type {
   Course,
-  PagedResponse,
   CourseFormValues,
 } from '../types/course';
 
+export interface CoursePageResponse {
+  content: Course[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
 export const getCourses = (
-  keyword?: string,
-  page = 0,
-  size = 10
+  keyword: string,
+  page: number,
+  size: number
 ) => {
-  return axiosClient.get<PagedResponse<Course>>(
+  return axiosClient.get<CoursePageResponse>(
     '/api/courses',
     {
-      params: { keyword, page, size },
+      params: {
+        keyword,
+        page,
+        size,
+      },
     }
   );
 };
 
-const toPayload = (values: CourseFormValues) => ({
-  tenMonHoc: values.tenMonHoc.trim(),
-  soTinChi: Number(values.soTinChi),
-  soChoToiDa: Number(values.soChoToiDa),
-});
-
 export const createCourse = (
-  values: CourseFormValues
+  payload: CourseFormValues
 ) => {
   return axiosClient.post<Course>(
     '/api/courses',
-    toPayload(values)
+    payload
   );
 };
 
 export const updateCourse = (
   id: number,
-  values: CourseFormValues
+  payload: CourseFormValues
 ) => {
   return axiosClient.put<Course>(
     `/api/courses/${id}`,
-    toPayload(values)
+    payload
   );
 };
 
-export const deleteCourse = (id: number) => {
-  return axiosClient.delete(`/api/courses/${id}`);
+export const deleteCourse = (
+  id: number
+) => {
+  return axiosClient.delete(
+    `/api/courses/${id}`
+  );
+};
+
+export const getCourseById = (
+  id: number
+) => {
+  return axiosClient.get<Course>(
+    `/api/courses/${id}`
+  );
 };

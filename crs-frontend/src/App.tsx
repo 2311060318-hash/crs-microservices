@@ -1,21 +1,22 @@
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
+  Route,
+  Routes,
 } from 'react-router-dom';
 
 import {
   AuthProvider,
 } from './context/AuthContext';
 
-import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 
 import LoginPage from './pages/LoginPage';
 import CoursesPage from './pages/CoursesPage';
 import AdminCoursesPage from './pages/AdminCoursesPage';
 import RegisterCoursePage from './pages/RegisterCoursePage';
+import MyRegistrationsPage from './pages/MyRegistrationsPage';
 
 function App() {
   return (
@@ -65,9 +66,21 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/my-registrations"
+            element={
+              <ProtectedRoute
+                requiredRole="STUDENT"
+              >
+                <MyRegistrationsPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
 }
+
 export default App;

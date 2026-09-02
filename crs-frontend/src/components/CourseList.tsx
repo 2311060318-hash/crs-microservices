@@ -8,6 +8,8 @@ interface CourseListProps {
   onRetry: () => void;
   onEdit?: (course: Course) => void;
   onDelete?: (course: Course) => void;
+  onRegister?: (course: Course) => void;
+  registeringId?: number | null;
 }
 
 export default function CourseList({
@@ -17,6 +19,8 @@ export default function CourseList({
   onRetry,
   onEdit,
   onDelete,
+  onRegister,
+  registeringId,
 }: CourseListProps) {
   if (state === 'loading') {
     return (
@@ -45,7 +49,9 @@ export default function CourseList({
   }
 
   const showActions =
-    Boolean(onEdit || onDelete);
+    !!onEdit ||
+    !!onDelete ||
+    !!onRegister;
 
   return (
     <table
@@ -76,11 +82,11 @@ export default function CourseList({
           <tr
             key={course.id}
             style={{
-              borderBottom: '1px solid #eee',
+              borderBottom:
+                '1px solid #eee',
             }}
           >
             <td>{course.tenMonHoc}</td>
-
             <td>{course.soTinChi}</td>
 
             <td
@@ -119,6 +125,30 @@ export default function CourseList({
                     }}
                   >
                     Xóa
+                  </button>
+                )}
+
+                {onRegister && (
+                  <button
+                    onClick={() =>
+                      onRegister(course)
+                    }
+                    disabled={
+                      course.soChoConLai === 0 ||
+                      registeringId ===
+                        course.id
+                    }
+                    style={{
+                      marginLeft: 8,
+                    }}
+                  >
+                    {registeringId ===
+                    course.id
+                      ? 'Đang đăng ký...'
+                      : course.soChoConLai ===
+                          0
+                        ? 'Hết chỗ'
+                        : 'Đăng ký'}
                   </button>
                 )}
               </td>

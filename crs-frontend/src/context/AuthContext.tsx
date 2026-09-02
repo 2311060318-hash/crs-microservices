@@ -2,12 +2,13 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   type ReactNode,
 } from 'react';
+
 import type { LoginResponse } from '../types/auth';
 
 interface AuthUser {
+  id: number;
   username: string;
   role: 'ADMIN' | 'STUDENT';
 }
@@ -19,38 +20,61 @@ interface AuthContextValue {
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined
-);
-
 const TOKEN_KEY = 'crs_token';
 const USER_KEY = 'crs_user';
+
+const AuthContext =
+  createContext<AuthContextValue | undefined>(
+    undefined
+  );
+
+function loadSavedUser(): AuthUser | null {
+  const token =
+    localStorage.getItem(TOKEN_KEY);
+
+  const savedUser =
+    localStorage.getItem(USER_KEY);
+
+  if (!token || !savedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(savedUser) as AuthUser;
+  } catch {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
 
 export function AuthProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem(USER_KEY);
-    const savedToken = localStorage.getItem(TOKEN_KEY);
-
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+  const [user, setUser] =
+    useState<AuthUser | null>(
+      loadSavedUser
+    );
 
   const login = (data: LoginResponse) => {
-    localStorage.setItem(TOKEN_KEY, data.token);
-
     const authUser: AuthUser = {
+      id: data.userId,
       username: data.username,
       role: data.role,
     };
 
-    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    localStorage.setItem(
+      TOKEN_KEY,
+      data.token
+    );
+
+    localStorage.setItem(
+      USER_KEY,
+      JSON.stringify(authUser)
+    );
+
     setUser(authUser);
   };
 
@@ -76,13 +100,14 @@ export function AuthProvider({
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
-  const ctx = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
 
-  if (!ctx) {
+  if (!context) {
     throw new Error(
       'useAuth phai duoc dung ben trong AuthProvider'
     );
   }
 
-  return ctx;
+  return context;
 }
