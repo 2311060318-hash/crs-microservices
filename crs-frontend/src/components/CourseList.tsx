@@ -6,8 +6,8 @@ interface CourseListProps {
   state: LoadState;
   errorMessage: string;
   onRetry: () => void;
-  onEdit: (course: Course) => void;
-  onDelete: (course: Course) => void;
+  onEdit?: (course: Course) => void;
+  onDelete?: (course: Course) => void;
 }
 
 export default function CourseList({
@@ -19,24 +19,41 @@ export default function CourseList({
   onDelete,
 }: CourseListProps) {
   if (state === 'loading') {
-    return <p>Dang tai danh sach mon hoc...</p>;
+    return (
+      <p>Đang tải danh sách môn học...</p>
+    );
   }
 
   if (state === 'error') {
     return (
       <div style={{ color: '#b91c1c' }}>
         <p>{errorMessage}</p>
-        <button onClick={onRetry}>Thu lai</button>
+
+        <button onClick={onRetry}>
+          Thử lại
+        </button>
       </div>
     );
   }
 
   if (state === 'empty') {
-    return <p>Khong tim thay mon hoc nao phu hop.</p>;
+    return (
+      <p>
+        Không tìm thấy môn học nào phù hợp.
+      </p>
+    );
   }
 
+  const showActions =
+    Boolean(onEdit || onDelete);
+
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <table
+      style={{
+        width: '100%',
+        borderCollapse: 'collapse',
+      }}
+    >
       <thead>
         <tr
           style={{
@@ -44,10 +61,13 @@ export default function CourseList({
             borderBottom: '2px solid #333',
           }}
         >
-          <th>Ten mon hoc</th>
-          <th>So tin chi</th>
-          <th>So cho con lai</th>
-          <th>Thao tac</th>
+          <th>Tên môn học</th>
+          <th>Số tín chỉ</th>
+          <th>Số chỗ còn lại</th>
+
+          {showActions && (
+            <th>Thao tác</th>
+          )}
         </tr>
       </thead>
 
@@ -55,9 +75,12 @@ export default function CourseList({
         {courses.map((course) => (
           <tr
             key={course.id}
-            style={{ borderBottom: '1px solid #eee' }}
+            style={{
+              borderBottom: '1px solid #eee',
+            }}
           >
             <td>{course.tenMonHoc}</td>
+
             <td>{course.soTinChi}</td>
 
             <td
@@ -68,24 +91,38 @@ export default function CourseList({
                     : 'inherit',
               }}
             >
-              {course.soChoConLai} / {course.soChoToiDa}
+              {course.soChoConLai}
+              {' / '}
+              {course.soChoToiDa}
             </td>
 
-            <td>
-              <button onClick={() => onEdit(course)}>
-                Sua
-              </button>
+            {showActions && (
+              <td>
+                {onEdit && (
+                  <button
+                    onClick={() =>
+                      onEdit(course)
+                    }
+                  >
+                    Sửa
+                  </button>
+                )}
 
-              <button
-                onClick={() => onDelete(course)}
-                style={{
-                  marginLeft: 8,
-                  color: '#b91c1c',
-                }}
-              >
-                Xoa
-              </button>
-            </td>
+                {onDelete && (
+                  <button
+                    onClick={() =>
+                      onDelete(course)
+                    }
+                    style={{
+                      marginLeft: 8,
+                      color: '#b91c1c',
+                    }}
+                  >
+                    Xóa
+                  </button>
+                )}
+              </td>
+            )}
           </tr>
         ))}
       </tbody>
