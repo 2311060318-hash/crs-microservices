@@ -1,79 +1,54 @@
 package vn.edu.crs.registrationservice.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import vn.edu.crs.registrationservice.client.CourseClient;
 import vn.edu.crs.registrationservice.dto.RegistrationRequestDTO;
 import vn.edu.crs.registrationservice.entity.Registration;
 import vn.edu.crs.registrationservice.repository.RegistrationRepository;
 
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
 public class RegistrationService {
 
-    private static final String DA_DANG_KY =
-            "DA_DANG_KY";
+    private static final String DA_DANG_KY = "DA_DANG_KY";
+    private static final String DA_HUY = "DA_HUY";
 
-    private static final String DA_HUY =
-            "DA_HUY";
-
-    private final RegistrationRepository
-            registrationRepository;
-
+    private final RegistrationRepository registrationRepository;
     private final CourseClient courseClient;
 
-    public Registration register(
-            RegistrationRequestDTO dto
-    ) {
+    public Registration register(RegistrationRequestDTO dto) {
 
-        if (
+        boolean alreadyRegistered =
                 registrationRepository
                         .existsByStudentIdAndCourseIdAndTrangThai(
                                 dto.getStudentId(),
                                 dto.getCourseId(),
                                 DA_DANG_KY
-                        )
-        ) {
+                        );
 
+        if (alreadyRegistered) {
             throw new IllegalStateException(
                     "Sinh vien da dang ky mon hoc nay roi"
             );
         }
 
-        // 1. Trừ chỗ ở course-service trước.
-        // Nếu lỗi -> dừng ở đây, không lưu Registration.
-        courseClient.reserveSeat(
-                dto.getCourseId()
-        );
+        // Trừ chỗ ở course-service trước.
+        // Nếu course-service báo lỗi thì không lưu đăng ký.
+        courseClient.reserveSeat(dto.getCourseId());
 
-        // 2. Chỉ lưu khi trừ chỗ thành công.
-        Registration registration =
-                new Registration();
+        Registration registration = new Registration();
 
-        registration.setStudentId(
-                dto.getStudentId()
-        );
+        registration.setStudentId(dto.getStudentId());
+        registration.setCourseId(dto.getCourseId());
+        registration.setTrangThai(DA_DANG_KY);
+        registration.setNgayDangKy(LocalDateTime.now());
 
-        registration.setCourseId(
-                dto.getCourseId()
-        );
-
-        registration.setTrangThai(
-                DA_DANG_KY
-        );
-
-        registration.setNgayDangKy(
-                LocalDateTime.now()
-        );
-
-        return registrationRepository.save(
-                registration
-        );
+        return registrationRepository.save(registration);
     }
 
     public void cancel(Long registrationId) {
@@ -88,29 +63,21 @@ public class RegistrationService {
                                 )
                         );
 
-        if (
-                DA_HUY.equals(
-                        registration.getTrangThai()
-                )
-        ) {
-
+        if (DA_HUY.equals(registration.getTrangThai())) {
             throw new IllegalStateException(
                     "Dang ky nay da duoc huy truoc do"
             );
         }
 
-        // Hoàn chỗ trước
-        courseClient.releaseSeat(
-                registration.getCourseId()
-        );
+        // Hoàn lại chỗ cho course-service trước.
+        courseClient.releaseSeat(registration.getCourseId());
 
-        // Sau đó mới đổi trạng thái
-        registration.setTrangThai(
-                DA_HUY
-        );
+        // Chỉ đổi trạng thái sau khi hoàn chỗ thành công.
+        registration.setTrangThai(DA_HUY);
+        registrationRepository.save(registration);
+    }
 
-        registrationRepository.save(
-                registration
-        );
+    public List<Registration> getMyRegistrations(Long studentId) {
+        return registrationRepository.findByStudentId(studentId);
     }
 }
